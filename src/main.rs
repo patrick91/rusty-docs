@@ -1,4 +1,4 @@
-mod docstrings;
+mod cleandoc;
 
 fn main() {
     println!("Hello, world!");

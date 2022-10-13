@@ -1,5 +1,3 @@
-// a function that cleans a docstring according to Python's inspect.cleandoc function
-
 pub fn cleandoc(docstring: &str) -> String {
     // split the docstring into lines
     let lines = docstring.lines().collect::<Vec<&str>>();
@@ -50,7 +48,7 @@ pub fn cleandoc(docstring: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::docstrings::cleandoc;
+    use crate::cleandoc::cleandoc;
 
     #[test]
     fn it_works_with_basic_docstring() {
