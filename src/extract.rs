@@ -31,9 +31,6 @@ impl Docstring {
             .collect::<Vec<&str>>()
             .join(" ");
 
-        // let title_lines = lines.take_while(|line| !line.trim().is_empty());
-        // let title = title_lines.collect::<Vec<&str>>().join("\n");
-
         for line in lines {
             if line.starts_with("Args:") {
                 current_section = &mut arguments;
