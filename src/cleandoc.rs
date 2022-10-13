@@ -1,3 +1,5 @@
+use textwrap;
+
 pub fn cleandoc(docstring: &str) -> String {
     // split the docstring into lines
     let lines = docstring.lines().collect::<Vec<&str>>();
@@ -15,47 +17,31 @@ pub fn cleandoc(docstring: &str) -> String {
 
     // Remove left whitespace from first line.
     let first_line = lines[0].trim_start().to_string();
-    // Remove margin from other lines.
-    let mut other_lines = lines[1..]
+
+    let rest = lines
         .iter()
-        .map(|line| {
-            if line.len() < margin as usize {
-                line.to_string()
-            } else {
-                line[margin as usize..].to_string()
-            }
-        })
-        .collect::<Vec<String>>();
+        .skip(1)
+        .map(|line| line.to_string())
+        .collect::<Vec<String>>()
+        .join("\n");
 
-    // Reassemble the docstring.
-    // join first line with other lines using vectors
-    let mut result = vec![first_line];
-    result.append(&mut other_lines);
+    let dedented = textwrap::dedent(&rest);
 
-    // Remove empty lines from the end.
-    while result.last().map_or(false, |line| line.trim().is_empty()) {
-        result.pop();
-    }
-
-    // Remove empty lines from the beginning.
-    while result.first().map_or(false, |line| line.trim().is_empty()) {
-        result.remove(0);
-    }
-    result.join("\n")
+    (first_line + "\n" + &dedented).trim().to_string()
 }
 
 // tests
 
 #[cfg(test)]
 mod tests {
-    use crate::cleandoc::cleandoc;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn it_works_with_basic_docstring() {
         let a_docstring = r#"
         Example docstring
         "#;
-        let result = cleandoc(a_docstring);
+        let result = super::cleandoc(a_docstring);
         assert_eq!(result, "Example docstring");
     }
 
@@ -64,7 +50,7 @@ mod tests {
         let a_docstring = r#"
             Example docstring
         "#;
-        let result = cleandoc(a_docstring);
+        let result = super::cleandoc(a_docstring);
         assert_eq!(result, "Example docstring");
     }
 
@@ -74,7 +60,7 @@ mod tests {
 
             Example docstring
         "#;
-        let result = cleandoc(a_docstring);
+        let result = super::cleandoc(a_docstring);
         assert_eq!(result, "Example docstring");
     }
 
@@ -84,7 +70,7 @@ mod tests {
             Example docstring
 
         "#;
-        let result = cleandoc(a_docstring);
+        let result = super::cleandoc(a_docstring);
         assert_eq!(result, "Example docstring");
     }
 
@@ -94,7 +80,7 @@ mod tests {
             Example docstring
             with multiple lines
         "#;
-        let result = cleandoc(a_docstring);
+        let result = super::cleandoc(a_docstring);
         assert_eq!(result, "Example docstring\nwith multiple lines");
     }
 
@@ -106,7 +92,7 @@ mod tests {
 
             with multiple lines
         "#;
-        let result = cleandoc(a_docstring);
+        let result = super::cleandoc(a_docstring);
         assert_eq!(result, "Example docstring\n\n\nwith multiple lines");
     }
 
@@ -116,7 +102,7 @@ mod tests {
             Example docstring
                 with multiple lines
         "#;
-        let result = cleandoc(a_docstring);
+        let result = super::cleandoc(a_docstring);
         assert_eq!(result, "Example docstring\n    with multiple lines");
     }
 }
