@@ -1,13 +1,74 @@
 use crate::cleandoc;
 use textwrap;
 
+#[derive(Debug)]
+struct Argument {
+    name: String,
+    type_: Option<String>,
+    default: Option<String>,
+    documentation: Option<String>,
+}
+
 struct Docstring {
     pub title: String,
     pub description: String,
-    // TODO: make structs for these
-    pub arguments: String,
     pub returns: String,
+    pub arguments: Vec<Argument>,
+    // TODO: make structs for these
     pub raises: String,
+}
+
+fn parse_arguments(docstring: &str) -> Vec<Argument> {
+    let ds = textwrap::dedent(docstring);
+
+    let mut arguments = Vec::new();
+    let mut lines = ds.lines();
+
+    let mut current_argument: Option<Argument> = None;
+
+    // for each line in the docstring, if it has a colon, it's an argument
+    // otherwise, it's part of the argument's documentation
+
+    while let Some(line) = lines.next() {
+        if line.contains(':') {
+            // if we have a current argument, push it to the list
+            if let Some(argument) = current_argument {
+                arguments.push(argument);
+            }
+
+            // start a new argument
+            let mut parts = line.splitn(2, ':');
+            let name = parts.next().unwrap().trim().to_string();
+
+            let documentation = parts.next().map(|s| s.trim().to_string());
+            current_argument = Some(Argument {
+                name,
+                type_: None,
+                default: None,
+                documentation,
+            });
+        } else {
+            // this should not happen, but if it does, just ignore it
+            if current_argument.is_none() {
+                continue;
+            }
+
+            // if we have a current argument, add this line to its documentation
+            let current_argument = current_argument.as_mut().unwrap();
+            let documentation = current_argument
+                .documentation
+                .take()
+                .unwrap_or_else(|| "".to_string());
+            current_argument.documentation = Some((documentation + "\n" + line).trim().to_owned());
+        }
+    }
+
+    // push the last argument
+    if let Some(argument) = current_argument {
+        arguments.push(argument);
+    }
+
+    arguments
 }
 
 impl Docstring {
@@ -47,10 +108,12 @@ impl Docstring {
             current_section.push('\n')
         }
 
+        let arguments = parse_arguments(&arguments);
+
         Self {
             title,
             description: description.trim().to_string(),
-            arguments: textwrap::dedent(&arguments).trim().to_string(),
+            arguments,
             returns: textwrap::dedent(&returns).trim().to_string(),
             raises: textwrap::dedent(&raises).trim().to_string(),
         }
@@ -101,10 +164,31 @@ mod tests {
             "Retrieves rows pertaining to the given keys from the Table instance\nrepresented by table_handle.  String keys will be UTF-8 encoded."
         );
 
+        // print parsed_docstring.arguments
+
+        println!("{:#?}", parsed_docstring.arguments);
+
+        assert_eq!(parsed_docstring.arguments.len(), 3);
+        assert_eq!(parsed_docstring.arguments[0].name, "table_handle");
         assert_eq!(
-            parsed_docstring.arguments,
-            "table_handle: An open smalltable.Table instance.\nkeys: A sequence of strings representing the key of each table\n  row to fetch.  String keys will be UTF-8 encoded.\nrequire_all_keys: If True only rows with values set for all keys will be\n  returned."
+            parsed_docstring.arguments[0].documentation,
+            Some("An open smalltable.Table instance.".to_string())
         );
+        assert_eq!(parsed_docstring.arguments[0].default, None);
+        assert_eq!(parsed_docstring.arguments[0].type_, None);
+
+        assert_eq!(parsed_docstring.arguments[1].name, "keys");
+        assert_eq!(parsed_docstring.arguments[1].documentation, Some("A sequence of strings representing the key of each table\n  row to fetch.  String keys will be UTF-8 encoded.".to_string()));
+        assert_eq!(parsed_docstring.arguments[1].default, None);
+        assert_eq!(parsed_docstring.arguments[1].type_, None);
+
+        assert_eq!(parsed_docstring.arguments[2].name, "require_all_keys");
+        assert_eq!(
+            parsed_docstring.arguments[2].documentation,
+            Some("If True only rows with values set for all keys will be\n  returned.".to_string())
+        );
+        assert_eq!(parsed_docstring.arguments[2].default, None);
+        assert_eq!(parsed_docstring.arguments[2].type_, None);
 
         assert_eq!(
             parsed_docstring.returns,
