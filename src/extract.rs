@@ -9,13 +9,18 @@ struct Argument {
     documentation: Option<String>,
 }
 
+#[derive(Debug)]
+struct Raises {
+    exception: String,
+    documentation: Option<String>,
+}
+
 struct Docstring {
     pub title: String,
     pub description: String,
     pub returns: String,
     pub arguments: Vec<Argument>,
-    // TODO: make structs for these
-    pub raises: String,
+    pub raises: Vec<Raises>,
 }
 
 fn parse_arguments(docstring: &str) -> Vec<Argument> {
@@ -71,6 +76,57 @@ fn parse_arguments(docstring: &str) -> Vec<Argument> {
     arguments
 }
 
+fn parse_raises(docstring: &str) -> Vec<Raises> {
+    let ds = textwrap::dedent(docstring);
+
+    let mut raises = Vec::new();
+    let mut lines = ds.lines();
+
+    let mut current_raises: Option<Raises> = None;
+
+    // for each line in the docstring, if it has a colon, it's an argument
+    // otherwise, it's part of the argument's documentation
+
+    while let Some(line) = lines.next() {
+        if line.contains(':') {
+            // if we have a current argument, push it to the list
+            if let Some(r) = current_raises {
+                raises.push(r);
+            }
+
+            // start a new argument
+            let mut parts = line.splitn(2, ':');
+            let exception = parts.next().unwrap().trim().to_string();
+
+            let documentation = parts.next().map(|s| s.trim().to_string());
+            current_raises = Some(Raises {
+                exception,
+                documentation,
+            });
+        } else {
+            // this should not happen, but if it does, just ignore it
+            if current_raises.is_none() {
+                continue;
+            }
+
+            // if we have a current argument, add this line to its documentation
+            let current_raises = current_raises.as_mut().unwrap();
+            let documentation = current_raises
+                .documentation
+                .take()
+                .unwrap_or_else(|| "".to_string());
+            current_raises.documentation = Some((documentation + "\n" + line).trim().to_owned());
+        }
+    }
+
+    // push the last argument
+    if let Some(r) = current_raises {
+        raises.push(r);
+    }
+
+    raises
+}
+
 impl Docstring {
     pub fn new_from_string(docstring: &str) -> Self {
         let cleaned_docstring = cleandoc::cleandoc(docstring);
@@ -109,13 +165,14 @@ impl Docstring {
         }
 
         let arguments = parse_arguments(&arguments);
+        let raises = parse_raises(&raises);
 
         Self {
             title,
             description: description.trim().to_string(),
             arguments,
             returns: textwrap::dedent(&returns).trim().to_string(),
-            raises: textwrap::dedent(&raises).trim().to_string(),
+            raises,
         }
     }
 }
@@ -195,9 +252,12 @@ mod tests {
             "A dict mapping keys to the corresponding table row data\nfetched. Each row is represented as a tuple of strings. For\nexample:\n\n{b'Serak': ('Rigel VII', 'Preparer'),\n b'Zim': ('Irk', 'Invader'),\n b'Lrrr': ('Omicron Persei 8', 'Emperor')}\n\nReturned keys are always bytes.  If a key from the keys argument is\nmissing from the dictionary, then that row was not found in the\ntable (and require_all_keys must have been False)."
         );
 
+        assert_eq!(parsed_docstring.raises.len(), 1);
+
+        assert_eq!(parsed_docstring.raises[0].exception, "IOError");
         assert_eq!(
-            parsed_docstring.raises,
-            "IOError: An error occurred accessing the smalltable."
+            parsed_docstring.raises[0].documentation,
+            Some("An error occurred accessing the smalltable.".to_string())
         );
     }
 }
