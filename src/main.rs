@@ -1,4 +1,5 @@
 mod cleandoc;
+mod docstrings;
 mod extract;
 
 fn main() {
