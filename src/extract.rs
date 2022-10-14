@@ -36,7 +36,7 @@ pub fn extract(code: &str) -> Module {
                 // find docstring, the first statement in the body of the function
                 // that's an Expr with a Constant value
 
-                let docstring = match body.first() {
+                let docstring_text = match body.first() {
                     Some(stmt) => match &stmt.node {
                         StmtKind::Expr { value } => match &value.node {
                             ExprKind::Constant { value, kind: _ } => match value {
@@ -50,7 +50,12 @@ pub fn extract(code: &str) -> Module {
                     None => "".to_string(),
                 };
 
-                println!("Docstring: {}", docstring);
+                let docstring = docstrings::Docstring::new_from_string(&docstring_text);
+
+                functions.push(Function {
+                    name: name.to_string(),
+                    docstring,
+                });
             }
             _ => {}
         }
