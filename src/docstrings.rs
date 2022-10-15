@@ -20,6 +20,7 @@ pub struct Docstring {
     pub title: String,
     pub description: String,
     pub returns: String,
+    pub body: Vec<String>,
     pub arguments: Vec<Argument>,
     pub raises: Vec<Raises>,
 }
@@ -139,6 +140,8 @@ impl Docstring {
 
         let mut current_section = &mut description;
 
+        let mut current_section_type = "body";
+
         let mut lines = cleaned_docstring.lines();
 
         // the title starts with the first line and ends when the first empty line is encountered
@@ -149,20 +152,44 @@ impl Docstring {
             .collect::<Vec<&str>>()
             .join(" ");
 
+        let mut body = Vec::new();
+        let mut current_body_part: Option<String> = None;
+
         for line in lines {
+            if current_section_type == "body" {
+                current_body_part = match current_body_part {
+                    Some(mut text) => {
+                        text.push_str(line);
+                        Some(text)
+                    }
+                    None => {
+                        let mut part = String::new();
+                        part.push_str(line);
+                        Some(part)
+                    }
+                }
+            }
+
             if line.starts_with("Args:") || line.starts_with("Arguments:") {
+                current_section_type = "arguments";
                 current_section = &mut arguments;
                 continue;
             } else if line.starts_with("Returns:") {
+                current_section_type = "returns";
                 current_section = &mut returns;
                 continue;
             } else if line.starts_with("Raises:") {
+                current_section_type = "raises";
                 current_section = &mut raises;
                 continue;
             }
 
             current_section.push_str(line);
             current_section.push('\n')
+        }
+
+        if let Some(text) = current_body_part {
+            body.push(text);
         }
 
         let arguments = parse_arguments(&arguments);
@@ -172,6 +199,7 @@ impl Docstring {
             title,
             description: description.trim().to_string(),
             arguments,
+            body,
             returns: textwrap::dedent(&returns).trim().to_string(),
             raises,
         }
@@ -222,10 +250,6 @@ mod tests {
             "Retrieves rows pertaining to the given keys from the Table instance\nrepresented by table_handle.  String keys will be UTF-8 encoded."
         );
 
-        // print parsed_docstring.arguments
-
-        println!("{:#?}", parsed_docstring.arguments);
-
         assert_eq!(parsed_docstring.arguments.len(), 3);
         assert_eq!(parsed_docstring.arguments[0].name, "table_handle");
         assert_eq!(
@@ -260,5 +284,25 @@ mod tests {
             parsed_docstring.raises[0].description,
             Some("An error occurred accessing the smalltable.".to_string())
         );
+    }
+
+    #[test]
+    fn it_parses_docstrings_with_code_snippets() {
+        let docstring = r#"
+        This is a docstring with code snippets
+
+        >>> 1 + 1 = 2
+        >>> 2 + 2 = 4
+        >>> print("something")
+        "#;
+
+        let parsed_docstring = super::Docstring::new_from_string(docstring);
+
+        assert_eq!(
+            parsed_docstring.title,
+            "This is a docstring with code snippets"
+        );
+
+        assert_eq!(parsed_docstring.body.len(), 1);
     }
 }
