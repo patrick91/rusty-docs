@@ -150,7 +150,7 @@ impl Docstring {
             .join(" ");
 
         for line in lines {
-            if line.starts_with("Args:") {
+            if line.starts_with("Args:") || line.starts_with("Arguments:") {
                 current_section = &mut arguments;
                 continue;
             } else if line.starts_with("Returns:") {
