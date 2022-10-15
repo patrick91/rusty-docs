@@ -1,7 +1,7 @@
 use crate::cleandoc;
 use textwrap;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Argument {
     pub name: String,
     pub type_: Option<String>,
@@ -9,18 +9,24 @@ pub struct Argument {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Raises {
     pub exception: String,
     pub description: Option<String>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, PartialEq)]
+pub enum BodyPart {
+    Text(String),
+    CodeSnippet(String),
+}
+
+#[derive()]
 pub struct Docstring {
     pub title: String,
     pub description: String,
     pub returns: String,
-    pub body: Vec<String>,
+    pub body: Vec<BodyPart>,
     pub arguments: Vec<Argument>,
     pub raises: Vec<Raises>,
 }
@@ -152,20 +158,47 @@ impl Docstring {
             .collect::<Vec<&str>>()
             .join(" ");
 
-        let mut body = Vec::new();
-        let mut current_body_part: Option<String> = None;
+        let mut body: Vec<BodyPart> = Vec::new();
+        let mut current_body_part: Option<BodyPart> = None;
 
         for line in lines {
             if current_section_type == "body" {
-                current_body_part = match current_body_part {
-                    Some(mut text) => {
-                        text.push_str(line);
-                        Some(text)
+                // ...
+
+                if line.starts_with(">>> ") {
+                    // if we have a part and it's a CodeSnippet we can append to it, otherwise we need to create a new one
+
+                    let code = &line[4..];
+
+                    match current_body_part {
+                        Some(BodyPart::CodeSnippet(ref mut snippet)) => {
+                            snippet.push('\n');
+                            snippet.push_str(code);
+                        }
+                        Some(BodyPart::Text(part)) => {
+                            if !part.trim().is_empty() {
+                                body.push(BodyPart::Text(part));
+                            }
+
+                            current_body_part = Some(BodyPart::CodeSnippet(code.to_string()));
+                        }
+                        None => {
+                            current_body_part = Some(BodyPart::CodeSnippet(code.to_string()));
+                        }
                     }
-                    None => {
-                        let mut part = String::new();
-                        part.push_str(line);
-                        Some(part)
+                } else {
+                    match current_body_part {
+                        Some(BodyPart::Text(ref mut text)) => {
+                            text.push('\n');
+                            text.push_str(line);
+                        }
+                        Some(part) => {
+                            body.push(part);
+                            current_body_part = Some(BodyPart::Text(line.to_string()));
+                        }
+                        None => {
+                            current_body_part = Some(BodyPart::Text(line.to_string()));
+                        }
                     }
                 }
             }
@@ -188,8 +221,10 @@ impl Docstring {
             current_section.push('\n')
         }
 
-        if let Some(text) = current_body_part {
-            body.push(text);
+        println!("{:?}", current_body_part);
+
+        if let Some(part) = current_body_part {
+            body.push(part);
         }
 
         let arguments = parse_arguments(&arguments);
@@ -209,6 +244,8 @@ impl Docstring {
 #[cfg(test)]
 mod tests {
     use pretty_assertions::assert_eq;
+
+    use crate::docstrings::BodyPart;
 
     #[test]
     fn it_parses_docstrings() {
@@ -294,6 +331,10 @@ mod tests {
         >>> 1 + 1 = 2
         >>> 2 + 2 = 4
         >>> print("something")
+
+        >>> 1 + 1 = 3
+        >>> 2 + 2 = 5
+        >>> print("something wrong")
         "#;
 
         let parsed_docstring = super::Docstring::new_from_string(docstring);
@@ -303,6 +344,16 @@ mod tests {
             "This is a docstring with code snippets"
         );
 
-        assert_eq!(parsed_docstring.body.len(), 1);
+        assert_eq!(parsed_docstring.body.len(), 2);
+
+        assert_eq!(
+            parsed_docstring.body[0],
+            BodyPart::CodeSnippet("1 + 1 = 2\n2 + 2 = 4\nprint(\"something\")".to_string())
+        );
+
+        assert_eq!(
+            parsed_docstring.body[1],
+            BodyPart::CodeSnippet("1 + 1 = 3\n2 + 2 = 5\nprint(\"something wrong\")".to_string())
+        );
     }
 }

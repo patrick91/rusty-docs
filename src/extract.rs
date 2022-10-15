@@ -2,7 +2,7 @@ use crate::docstrings;
 use rustpython_ast::{Constant, ExprKind, StmtKind};
 use rustpython_parser::parser;
 
-#[derive(Clone)]
+#[derive()]
 pub struct Function {
     pub name: String,
     // TODO: arguments?
@@ -89,22 +89,19 @@ mod tests {
 
         assert_eq!(result.functions.len(), 1);
 
-        let function = result.functions[0].clone();
+        let function = &result.functions[0];
 
         assert_eq!(function.name, "foo");
         assert_eq!(function.docstring.title, "Example docstring");
         assert_eq!(function.docstring.description, "");
         assert_eq!(function.docstring.arguments.len(), 2);
 
-        let arguments = function.docstring.arguments.clone();
+        let arguments = &function.docstring.arguments;
 
         assert_eq!(arguments[0].name, "a");
         assert_eq!(arguments[0].description, Some("a number".to_string()));
         assert_eq!(arguments[1].name, "b");
-        assert_eq!(
-            arguments[1].description,
-            Some("another number".to_string())
-        );
+        assert_eq!(arguments[1].description, Some("another number".to_string()));
 
         assert_eq!(function.docstring.returns, "the sum of a and b");
         assert_eq!(function.docstring.raises.len(), 1);
