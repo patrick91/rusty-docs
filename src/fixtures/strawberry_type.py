@@ -14,7 +14,15 @@ def type(
 ) -> Union[T, Callable[[T], T]]:
     """Annotates a class as a GraphQL type.
 
+    You can use it like this:
+
     >>> @strawberry.type:
+    >>> class X:
+    >>>     field_abc: str = "ABC"
+
+    Or like this:
+
+    >>> @strawberry.type(name="GraphQLName"):
     >>> class X:
     >>>     field_abc: str = "ABC"
 

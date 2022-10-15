@@ -10,6 +10,8 @@ rustpython-ast = {features = ["unparse"], git = "https://github.com/charliermars
 rustpython-common = {git = "https://github.com/charliermarsh/RustPython.git", rev = "778ae2aeb521d0438d2a91bd11238bb5c2bf9d4f"}
 rustpython-parser = {features = ["lalrpop"], git = "https://github.com/charliermarsh/RustPython.git", rev = "778ae2aeb521d0438d2a91bd11238bb5c2bf9d4f"}
 textwrap = "0.15.1"
+minijinja = "0.23.0"
+serde = "1.0.145"
 
 [dev-dependencies]
 insta = {version = "1.21.0", features = ["yaml"]}

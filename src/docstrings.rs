@@ -1,7 +1,8 @@
 use crate::cleandoc;
 use textwrap;
+use serde::Serialize;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Argument {
     pub name: String,
     pub type_: Option<String>,
@@ -9,19 +10,19 @@ pub struct Argument {
     pub description: Option<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Raises {
     pub exception: String,
     pub description: Option<String>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize)]
 pub enum BodyPart {
     Text(String),
     CodeSnippet(String),
 }
 
-#[derive()]
+#[derive(Serialize)]
 pub struct Docstring {
     pub title: String,
     pub description: String,
@@ -220,8 +221,6 @@ impl Docstring {
             current_section.push_str(line);
             current_section.push('\n')
         }
-
-        println!("{:?}", current_body_part);
 
         if let Some(part) = current_body_part {
             body.push(part);

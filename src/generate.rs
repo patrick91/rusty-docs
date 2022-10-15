@@ -1,67 +1,27 @@
 use crate::extract;
+use std::fs;
+
+use minijinja::{context, Environment};
 
 pub fn generate(code: &str) -> String {
     let module = extract::extract(code);
 
-    // TODO: jinja templates
+    let function_template = fs::read_to_string("./src/templates/function.md")
+        .expect("Unable to read function template");
+
+    let mut env = Environment::new();
+    env.add_template("function", &function_template).unwrap();
+
+    let function_template = env.get_template("function").unwrap();
 
     let mut output = String::new();
 
     for function in module.functions {
-        output.push('#');
-        output.push(' ');
-        output.push_str(&function.name);
-        output.push('\n');
-        output.push('\n');
-        output.push('#');
-        output.push('#');
-        output.push(' ');
-        output.push_str(&function.docstring.title);
-        output.push('\n');
-        output.push('\n');
+        let content = function_template
+            .render(context!(function_name => function.name, function_docstring => function.docstring))
+            .unwrap();
 
-        let description = &function.docstring.description;
-
-        if description != "" {
-            output.push_str(description);
-            output.push('\n');
-            output.push('\n');
-        }
-
-        // TODO: make this a map and maybe merge with type hints ?
-        let arguments = &function.docstring.arguments;
-
-        if !arguments.is_empty() {
-            output.push_str("## Arguments:");
-            output.push('\n');
-            output.push('\n');
-
-            for argument in arguments {
-                output.push_str("- **");
-                output.push_str(&argument.name);
-                output.push_str(":** ");
-
-                match &argument.description {
-                    Some(argument_description) => {
-                        output.push_str(&argument_description);
-                    }
-                    None => {}
-                }
-
-                output.push('\n');
-            }
-
-            output.push('\n');
-            output.push('\n');
-        }
-
-        if !function.docstring.returns.is_empty() {
-            output.push_str("## Returns:");
-            output.push('\n');
-            output.push('\n');
-
-            output.push_str(&function.docstring.returns);
-        }
+        output.push_str(&content);
     }
 
     output
