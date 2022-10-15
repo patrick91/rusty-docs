@@ -1,18 +1,52 @@
 use crate::docstrings;
-use rustpython_ast::{Constant, ExprKind, StmtKind};
+use rustpython_ast::{Constant, ExprKind, StmtKind, Located};
 use rustpython_parser::parser;
+
+pub struct Argument {
+    pub name: String,
+    pub type_: String,
+}
 
 #[derive()]
 pub struct Function {
     pub name: String,
     // TODO: arguments?
     pub docstring: docstrings::Docstring,
+    pub arguments: Vec<Argument>,
 }
 
 pub struct Module {
     // pub name: String,
     // pub docstring: docstrings::Docstring,
     pub functions: Vec<Function>,
+}
+
+fn extract_function(name: String, body: Vec<Located<StmtKind>>) -> Function {
+    // find docstring, the first statement in the body of the function
+    // that's an Expr with a Constant value
+
+    let docstring_text = match body.first() {
+        Some(stmt) => match &stmt.node {
+            StmtKind::Expr { value } => match &value.node {
+                ExprKind::Constant { value, kind: _ } => match value {
+                    Constant::Str(value) => value.clone(),
+                    _ => "".to_string(),
+                },
+                _ => "".to_string(),
+            },
+            _ => "".to_string(),
+        },
+        None => "".to_string(),
+    };
+
+    let docstring = docstrings::Docstring::new_from_string(&docstring_text);
+    let arguments = Vec::new();
+
+    Function {
+        name: name.to_string(),
+        docstring,
+        arguments,
+    }
 }
 
 pub fn extract(code: &str) -> Module {
@@ -25,35 +59,13 @@ pub fn extract(code: &str) -> Module {
         match statement.node {
             StmtKind::FunctionDef {
                 name,
-                args,
                 body,
+                args,
                 decorator_list,
                 returns,
                 type_comment,
-            } => {
-                // find docstring, the first statement in the body of the function
-                // that's an Expr with a Constant value
-
-                let docstring_text = match body.first() {
-                    Some(stmt) => match &stmt.node {
-                        StmtKind::Expr { value } => match &value.node {
-                            ExprKind::Constant { value, kind: _ } => match value {
-                                Constant::Str(value) => value.clone(),
-                                _ => "".to_string(),
-                            },
-                            _ => "".to_string(),
-                        },
-                        _ => "".to_string(),
-                    },
-                    None => "".to_string(),
-                };
-
-                let docstring = docstrings::Docstring::new_from_string(&docstring_text);
-
-                functions.push(Function {
-                    name: name.to_string(),
-                    docstring,
-                });
+            }=> {
+                functions.push(extract_function(name, body));
             }
             _ => {}
         }

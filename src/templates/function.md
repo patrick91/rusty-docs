@@ -16,7 +16,8 @@
 
 {% for argument in function_docstring.arguments-%}
 - **{{argument.name}}:**
-    - default: {{argument.default}}
-    - description: {{argument.description}}
+    - type: {{ argument.type }}
+    - default: {{ argument.default }}
+    - description: {{ argument.description }}
 {% endfor-%}
 {% endif %}
