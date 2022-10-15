@@ -2,4 +2,4 @@
 source: src/generate.rs
 expression: "super::generate(&code)"
 ---
-"implement me"
+"# a_function\n\n## A function that returns the input value plus one.\n\nThis is an example continuation of description.\nI still think we should merge title and description.\nFirst line of the docstring being a title is a bit odd. Maybe.\n\n🤔\n\n## Arguments:\n\n- **a:** The input value.\n\n\n## Returns:\n\nThe input value plus one."

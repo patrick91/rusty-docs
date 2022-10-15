@@ -31,8 +31,6 @@ pub fn extract(code: &str) -> Module {
                 returns,
                 type_comment,
             } => {
-                println!("Found function: {}", name);
-
                 // find docstring, the first statement in the body of the function
                 // that's an Expr with a Constant value
 
