@@ -99,10 +99,10 @@ mod tests {
         let arguments = function.docstring.arguments.clone();
 
         assert_eq!(arguments[0].name, "a");
-        assert_eq!(arguments[0].documentation, Some("a number".to_string()));
+        assert_eq!(arguments[0].description, Some("a number".to_string()));
         assert_eq!(arguments[1].name, "b");
         assert_eq!(
-            arguments[1].documentation,
+            arguments[1].description,
             Some("another number".to_string())
         );
 
@@ -110,7 +110,7 @@ mod tests {
         assert_eq!(function.docstring.raises.len(), 1);
         assert_eq!(function.docstring.raises[0].exception, "ValueError");
         assert_eq!(
-            function.docstring.raises[0].documentation,
+            function.docstring.raises[0].description,
             Some("if a or b are not numbers".to_string())
         );
     }

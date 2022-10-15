@@ -41,10 +41,9 @@ pub fn generate(code: &str) -> String {
                 output.push_str(&argument.name);
                 output.push_str(":** ");
 
-                // TODO: call this description
-                match &argument.documentation {
-                    Some(argument_documentation) => {
-                        output.push_str(&argument_documentation);
+                match &argument.description {
+                    Some(argument_description) => {
+                        output.push_str(&argument_description);
                     }
                     None => {}
                 }
