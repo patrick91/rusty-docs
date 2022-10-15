@@ -1,5 +1,6 @@
 # {{ function_name }}
 
+{{ function_docstring.title }}
 {% for part in function_docstring.body -%}
 {%-if part.CodeSnippet -%}
 ```python
@@ -19,5 +20,3 @@
     - description: {{argument.description}}
 {% endfor-%}
 {% endif %}
-
-{# {{ function_docstring }} #}
