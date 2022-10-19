@@ -15,9 +15,9 @@ pub struct Argument {
 #[derive(Debug)]
 pub struct Function {
     pub name: String,
-    // TODO: arguments?
     pub docstring: docstrings::Docstring,
     pub arguments: Vec<Argument>,
+    pub private_arguments: Vec<Argument>,
 }
 
 pub struct Module {
@@ -61,7 +61,8 @@ fn extract_function(
     // args, posonlyargs and kwonlyargs are lists of arg nodes.
     // vararg and kwarg are single arg nodes, referring to the *args, **kwargs parameters.
     // kw_defaults is a list of default values for keyword-only arguments. If one is None, the corresponding argument is required.
-    // defaults is a list of default values for arguments that can be passed positionally. If there are fewer defaults, they correspond to the last n arguments.
+    // defaults is a list of default values for arguments that can be passed positionally.
+    // If there are fewer defaults, they correspond to the last n arguments.
 
     for argument in arguments.args {
         match argument.node {
@@ -123,10 +124,34 @@ fn extract_function(
         }
     }
 
+    let mut public_arguments = Vec::new();
+    let mut private_arguments = Vec::new();
+
+    // move the arguments that start with _ to the private arguments list
+
+    for argument in function_arguments {
+        if docstring
+            .arguments
+            .iter()
+            .any(|arg| arg.name == argument.name)
+        {
+            public_arguments.push(argument);
+        } else if docstring
+            .private_arguments
+            .iter()
+            .any(|arg| arg.name == argument.name)
+        {
+            private_arguments.push(argument);
+        } else {
+            // TODO: missing argument in docstring
+        }
+    }
+
     Function {
         name: name.to_string(),
         docstring,
-        arguments: function_arguments,
+        arguments: public_arguments,
+        private_arguments,
     }
 }
 

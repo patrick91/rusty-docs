@@ -1,6 +1,6 @@
 use crate::cleandoc;
-use textwrap;
 use serde::Serialize;
+use textwrap;
 
 #[derive(Debug, Serialize)]
 pub struct Argument {
@@ -29,6 +29,7 @@ pub struct Docstring {
     pub returns: String,
     pub body: Vec<BodyPart>,
     pub arguments: Vec<Argument>,
+    pub private_arguments: Vec<Argument>,
     pub raises: Vec<Raises>,
 }
 
@@ -142,6 +143,7 @@ impl Docstring {
 
         let mut description = String::new();
         let mut arguments = String::new();
+        let mut private_arguments = String::new();
         let mut returns = String::new();
         let mut raises = String::new();
 
@@ -164,8 +166,6 @@ impl Docstring {
 
         for line in lines {
             if current_section_type == "body" {
-                // ...
-
                 if line.starts_with(">>> ") {
                     // if we have a part and it's a CodeSnippet we can append to it, otherwise we need to create a new one
 
@@ -208,6 +208,10 @@ impl Docstring {
                 current_section_type = "arguments";
                 current_section = &mut arguments;
                 continue;
+            } else if line.starts_with("Private arguments:") {
+                current_section_type = "private_arguments";
+                current_section = &mut private_arguments;
+                continue;
             } else if line.starts_with("Returns:") {
                 current_section_type = "returns";
                 current_section = &mut returns;
@@ -228,11 +232,13 @@ impl Docstring {
 
         let arguments = parse_arguments(&arguments);
         let raises = parse_raises(&raises);
+        let private_arguments = parse_arguments(&private_arguments);
 
         Self {
             title,
             description: description.trim().to_string(),
             arguments,
+            private_arguments,
             body,
             returns: textwrap::dedent(&returns).trim().to_string(),
             raises,
