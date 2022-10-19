@@ -1,13 +1,18 @@
 use crate::docstrings;
-use rustpython_ast::{Constant, ExprKind, StmtKind, Located};
+use rustpython_ast::{ArgData, Arguments, Constant, ExprKind, Located, StmtKind};
 use rustpython_parser::parser;
+use serde::Serialize;
 
+#[derive(Debug, Serialize)]
 pub struct Argument {
     pub name: String,
+    #[serde(rename(serialize = "type"))]
     pub type_: String,
+    pub default: Option<String>,
+    pub description: Option<String>,
 }
 
-#[derive()]
+#[derive(Debug)]
 pub struct Function {
     pub name: String,
     // TODO: arguments?
@@ -21,7 +26,11 @@ pub struct Module {
     pub functions: Vec<Function>,
 }
 
-fn extract_function(name: String, body: Vec<Located<StmtKind>>) -> Function {
+fn extract_function(
+    name: String,
+    body: Vec<Located<StmtKind>>,
+    arguments: Box<Arguments>,
+) -> Function {
     // find docstring, the first statement in the body of the function
     // that's an Expr with a Constant value
 
@@ -40,12 +49,84 @@ fn extract_function(name: String, body: Vec<Located<StmtKind>>) -> Function {
     };
 
     let docstring = docstrings::Docstring::new_from_string(&docstring_text);
-    let arguments = Vec::new();
+
+    let docstring_arguments = docstring
+        .arguments
+        .iter()
+        .map(|arg| (arg.name.clone(), arg))
+        .collect::<std::collections::HashMap<String, &docstrings::Argument>>();
+
+    let mut function_arguments = Vec::new();
+
+    // args, posonlyargs and kwonlyargs are lists of arg nodes.
+    // vararg and kwarg are single arg nodes, referring to the *args, **kwargs parameters.
+    // kw_defaults is a list of default values for keyword-only arguments. If one is None, the corresponding argument is required.
+    // defaults is a list of default values for arguments that can be passed positionally. If there are fewer defaults, they correspond to the last n arguments.
+
+    for argument in arguments.args {
+        match argument.node {
+            ArgData {
+                arg,
+                annotation: Some(annotation),
+                ..
+            } => {
+                let name = arg.to_string();
+                let description = match docstring_arguments.get(&name) {
+                    Some(arg) => arg.description.clone(),
+                    None => None,
+                };
+
+                let argument = Argument {
+                    name,
+                    type_: annotation.to_string(),
+                    default: None,
+                    description,
+                };
+                function_arguments.push(argument);
+            }
+            _ => {}
+        }
+    }
+    let kw_missing_defaults = arguments.kwonlyargs.len() - arguments.kw_defaults.len();
+
+    for (index, argument) in arguments.kwonlyargs.iter().enumerate() {
+        let default = if index >= kw_missing_defaults {
+            Some(&arguments.kw_defaults[index - kw_missing_defaults])
+        } else {
+            None
+        };
+
+        match &argument.node {
+            ArgData {
+                arg,
+                annotation: Some(annotation),
+                ..
+            } => {
+                let name = arg.to_string();
+                let description = match docstring_arguments.get(&name) {
+                    Some(arg) => arg.description.clone(),
+                    None => None,
+                };
+
+                let argument = Argument {
+                    name,
+                    type_: annotation.to_string(),
+                    default: match default {
+                        Some(default) => Some(default.to_string()),
+                        None => None,
+                    },
+                    description,
+                };
+                function_arguments.push(argument);
+            }
+            _ => {}
+        }
+    }
 
     Function {
         name: name.to_string(),
         docstring,
-        arguments,
+        arguments: function_arguments,
     }
 }
 
@@ -61,11 +142,11 @@ pub fn extract(code: &str) -> Module {
                 name,
                 body,
                 args,
-                decorator_list,
-                returns,
-                type_comment,
-            }=> {
-                functions.push(extract_function(name, body));
+                decorator_list: _,
+                returns: _,
+                type_comment: _,
+            } => {
+                functions.push(extract_function(name, body, args));
             }
             _ => {}
         }

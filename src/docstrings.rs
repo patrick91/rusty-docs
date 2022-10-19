@@ -22,7 +22,7 @@ pub enum BodyPart {
     CodeSnippet(String),
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct Docstring {
     pub title: String,
     pub description: String,

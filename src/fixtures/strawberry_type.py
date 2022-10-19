@@ -3,9 +3,9 @@ from typing import Optional, TypeVar, Sequence, Union, Callable
 T = TypeVar("T")
 
 def type(
-    cls: Optional[T] = None,
+    cls: Optional[T],
     *,
-    name: Optional[str] = None,
+    name: Optional[str],
     is_input: bool = False,
     is_interface: bool = False,
     description: Optional[str] = None,
@@ -35,6 +35,16 @@ def type(
         directives:
             a Sequence of schema directives, this will be outputted in the schema
             when printing it.
+        extend:
+            if set to True, the type will be marked as an extension type.
+            This is only used for Apollo Federation at the moment.
+
+    Private arguments:
+        is_input:
+            a flag to indicate if the type is an input type
+        is_interface:
+            a flag to indicate if the type is an interface
+
 
     Returns:
         A decorated version of the passed class, which can be used anywhere you

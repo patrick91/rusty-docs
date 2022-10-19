@@ -18,7 +18,11 @@ pub fn generate(code: &str) -> String {
 
     for function in module.functions {
         let content = function_template
-            .render(context!(function_name => function.name, function_docstring => function.docstring))
+            .render(context!(
+                function_name => function.name,
+                function_docstring => function.docstring,
+                function_arguments => function.arguments
+            ))
             .unwrap();
 
         output.push_str(&content);

@@ -14,10 +14,14 @@
 {% if function_docstring.arguments %}
 ## Arguments:
 
-{% for argument in function_docstring.arguments-%}
+{% for argument in function_arguments-%}
 - **{{argument.name}}:**
+    {% if argument.type -%}
     - type: {{ argument.type }}
+    {% endif -%}
+    {% if argument.default -%}
     - default: {{ argument.default }}
+    {% endif -%}
     - description: {{ argument.description }}
 {% endfor-%}
 {% endif %}
