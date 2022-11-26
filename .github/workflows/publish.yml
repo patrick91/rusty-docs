@@ -33,18 +33,18 @@ jobs:
             target: x86_64-pc-windows-msvc
         arch:
           - x64
-        # include:
-        #   # only node 15+ supports arm64 natively, so we only need to build 16 for now
-        #   - system:
-        #       os: [macOS, ARM64]
-        #       target: aarch64-apple-darwin
-        #     node_version: 16
-        #     arch: arm64
-        #   - system:
-        #       os: [macOS, ARM64]
-        #       target: aarch64-apple-darwin
-        #     node_version: 18
-        #     arch: arm64
+        include:
+          # only node 15+ supports arm64 natively, so we only need to build 16 for now
+          - system:
+              os: [self-hosted, macOS, ARM64]
+              target: aarch64-apple-darwin
+            node_version: 16
+            arch: arm64
+          - system:
+              os: [self-hosted, macOS, ARM64]
+              target: aarch64-apple-darwin
+            node_version: 18
+            arch: arm64
     steps:
       - uses: actions/checkout@v2
         with:
@@ -149,7 +149,7 @@ jobs:
       - name: Finalize GitHub release
         uses: ncipollo/release-action@v1
         with:
-          token: ${{ secrets.WORKFLOW_PAT }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: ${{ contains(github.event.release.name, '-') }}
           allowUpdates: true
           tag: ${{ github.event.release.tag_name }}
