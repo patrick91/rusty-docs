@@ -119,7 +119,7 @@ jobs:
   publish-npm:
     needs:
       - publish-github
-      - publish-github-docker
+      # - publish-github-docker
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
