@@ -1,8 +1,8 @@
 {
     "name": "rusty-docs",
-    "version": "0.1.9",
+    "version": "0.1.10",
     "description": "Rusty docs",
-    "main": "index.node",
+    "main": "index.js",
     "dependencies": {
         "@mapbox/node-pre-gyp": "^1.0.7"
     },
