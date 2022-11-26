@@ -6,7 +6,7 @@ use minijinja::{context, Environment};
 pub fn generate(code: &str) -> String {
     let module = extract::extract(code);
 
-    let function_template = fs::read_to_string("./src/templates/function.md")
+    let function_template = fs::read_to_string("./templates/function.md")
         .expect("Unable to read function template");
 
     let mut env = Environment::new();

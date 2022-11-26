@@ -51,6 +51,8 @@ shell.cp(
   "./dist"
 );
 
+shell.cp("-R", "templates", "./dist");
+
 //Add a NPM install script to the package.json that we push to NPM so that when consumers pull it down it
 //runs the expected node-pre-gyp step.
 const npmPackageJson = require("./dist/package.json");
