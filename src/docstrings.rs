@@ -74,7 +74,8 @@ fn parse_arguments(docstring: &str) -> Vec<Argument> {
                 .description
                 .take()
                 .unwrap_or_else(|| "".to_string());
-            current_argument.description = Some((description + " " + line.trim()).trim().to_owned());
+            current_argument.description =
+                Some((description + " " + line.trim()).trim().to_owned());
         }
     }
 
@@ -165,6 +166,24 @@ impl Docstring {
         let mut current_body_part: Option<BodyPart> = None;
 
         for line in lines {
+            if line.starts_with("Args:") || line.starts_with("Arguments:") {
+                current_section_type = "arguments";
+                current_section = &mut arguments;
+                continue;
+            } else if line.starts_with("Private arguments:") {
+                current_section_type = "private_arguments";
+                current_section = &mut private_arguments;
+                continue;
+            } else if line.starts_with("Returns:") {
+                current_section_type = "returns";
+                current_section = &mut returns;
+                continue;
+            } else if line.starts_with("Raises:") {
+                current_section_type = "raises";
+                current_section = &mut raises;
+                continue;
+            }
+
             if current_section_type == "body" {
                 if line.starts_with(">>> ") {
                     // if we have a part and it's a CodeSnippet we can append to it, otherwise we need to create a new one
@@ -202,24 +221,6 @@ impl Docstring {
                         }
                     }
                 }
-            }
-
-            if line.starts_with("Args:") || line.starts_with("Arguments:") {
-                current_section_type = "arguments";
-                current_section = &mut arguments;
-                continue;
-            } else if line.starts_with("Private arguments:") {
-                current_section_type = "private_arguments";
-                current_section = &mut private_arguments;
-                continue;
-            } else if line.starts_with("Returns:") {
-                current_section_type = "returns";
-                current_section = &mut returns;
-                continue;
-            } else if line.starts_with("Raises:") {
-                current_section_type = "raises";
-                current_section = &mut raises;
-                continue;
             }
 
             current_section.push_str(line);
