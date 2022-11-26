@@ -2,4 +2,4 @@
 source: src/generate.rs
 expression: "super::generate(&code)"
 ---
-"# a_function\n\nA function that returns the input value plus one.\n\nThis is an example continuation of description.\nI still think we should merge title and description.\nFirst line of the docstring being a title is a bit odd. Maybe.\n\n🤔\n\n\n\n## Arguments:\n\n\n| Name | Type | Description |\n| --- | --- | --- |\n| a | int | The input value. |\n\n"
+"# a_function\n\nA function that returns the input value plus one.\n\nThis is an example continuation of description.\nI still think we should merge title and description.\nFirst line of the docstring being a title is a bit odd. Maybe.\n\n🤔\n\n\n\n## Arguments:\n\n\n| Name | Type | Description |\n| --- | --- | --- |\n| a | int | The input value. |\n\n\n\n\n## Returns:\n\nThe input value plus one.\n\n\n"

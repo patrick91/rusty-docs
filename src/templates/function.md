@@ -21,3 +21,15 @@
 | {{ argument.name }} | {{ argument.type }} | {{ argument.description }} |
 {% endfor %}
 {% endif %}
+
+{% if function_docstring.returns %}
+## Returns:
+
+{{ function_docstring.returns }}
+{% endif %}
+
+{% if function_docstring.raises %}
+## Raises:
+
+{{ function_docstring.raises }}
+{% endif %}
