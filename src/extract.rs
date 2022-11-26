@@ -1,18 +1,158 @@
 use crate::docstrings;
-use rustpython_ast::{Constant, ExprKind, StmtKind};
+use rustpython_ast::{ArgData, Arguments, Constant, ExprKind, Located, StmtKind};
 use rustpython_parser::parser;
+use serde::Serialize;
 
-#[derive(Clone)]
+#[derive(Debug, Serialize)]
+pub struct Argument {
+    pub name: String,
+    #[serde(rename(serialize = "type"))]
+    pub type_: String,
+    pub default: Option<String>,
+    pub description: Option<String>,
+}
+
+#[derive(Debug)]
 pub struct Function {
     pub name: String,
-    // TODO: arguments?
     pub docstring: docstrings::Docstring,
+    pub arguments: Vec<Argument>,
+    pub private_arguments: Vec<Argument>,
 }
 
 pub struct Module {
     // pub name: String,
     // pub docstring: docstrings::Docstring,
     pub functions: Vec<Function>,
+}
+
+fn extract_function(
+    name: String,
+    body: Vec<Located<StmtKind>>,
+    arguments: Box<Arguments>,
+) -> Function {
+    // find docstring, the first statement in the body of the function
+    // that's an Expr with a Constant value
+
+    let docstring_text = match body.first() {
+        Some(stmt) => match &stmt.node {
+            StmtKind::Expr { value } => match &value.node {
+                ExprKind::Constant { value, kind: _ } => match value {
+                    Constant::Str(value) => value.clone(),
+                    _ => "".to_string(),
+                },
+                _ => "".to_string(),
+            },
+            _ => "".to_string(),
+        },
+        None => "".to_string(),
+    };
+
+    let docstring = docstrings::Docstring::new_from_string(&docstring_text);
+
+    let docstring_arguments = docstring
+        .arguments
+        .iter()
+        .map(|arg| (arg.name.clone(), arg))
+        .collect::<std::collections::HashMap<String, &docstrings::Argument>>();
+
+    let mut function_arguments = Vec::new();
+
+    // args, posonlyargs and kwonlyargs are lists of arg nodes.
+    // vararg and kwarg are single arg nodes, referring to the *args, **kwargs parameters.
+    // kw_defaults is a list of default values for keyword-only arguments. If one is None, the corresponding argument is required.
+    // defaults is a list of default values for arguments that can be passed positionally.
+    // If there are fewer defaults, they correspond to the last n arguments.
+
+    for argument in arguments.args {
+        match argument.node {
+            ArgData {
+                arg,
+                annotation: Some(annotation),
+                ..
+            } => {
+                let name = arg.to_string();
+                let description = match docstring_arguments.get(&name) {
+                    Some(arg) => arg.description.clone(),
+                    None => None,
+                };
+
+                let argument = Argument {
+                    name,
+                    type_: annotation.to_string(),
+                    default: None,
+                    description,
+                };
+                function_arguments.push(argument);
+            }
+            _ => {}
+        }
+    }
+    let kw_missing_defaults = arguments.kwonlyargs.len() - arguments.kw_defaults.len();
+
+    for (index, argument) in arguments.kwonlyargs.iter().enumerate() {
+        let default = if index >= kw_missing_defaults {
+            Some(&arguments.kw_defaults[index - kw_missing_defaults])
+        } else {
+            None
+        };
+
+        match &argument.node {
+            ArgData {
+                arg,
+                annotation: Some(annotation),
+                ..
+            } => {
+                let name = arg.to_string();
+                let description = match docstring_arguments.get(&name) {
+                    Some(arg) => arg.description.clone(),
+                    None => None,
+                };
+
+                let argument = Argument {
+                    name,
+                    type_: annotation.to_string(),
+                    default: match default {
+                        Some(default) => Some(default.to_string()),
+                        None => None,
+                    },
+                    description,
+                };
+                function_arguments.push(argument);
+            }
+            _ => {}
+        }
+    }
+
+    let mut public_arguments = Vec::new();
+    let mut private_arguments = Vec::new();
+
+    // move the arguments that start with _ to the private arguments list
+
+    for argument in function_arguments {
+        if docstring
+            .arguments
+            .iter()
+            .any(|arg| arg.name == argument.name)
+        {
+            public_arguments.push(argument);
+        } else if docstring
+            .private_arguments
+            .iter()
+            .any(|arg| arg.name == argument.name)
+        {
+            private_arguments.push(argument);
+        } else {
+            // TODO: missing argument in docstring
+        }
+    }
+
+    Function {
+        name: name.to_string(),
+        docstring,
+        arguments: public_arguments,
+        private_arguments,
+    }
 }
 
 pub fn extract(code: &str) -> Module {
@@ -25,37 +165,13 @@ pub fn extract(code: &str) -> Module {
         match statement.node {
             StmtKind::FunctionDef {
                 name,
-                args,
                 body,
-                decorator_list,
-                returns,
-                type_comment,
+                args,
+                decorator_list: _,
+                returns: _,
+                type_comment: _,
             } => {
-                println!("Found function: {}", name);
-
-                // find docstring, the first statement in the body of the function
-                // that's an Expr with a Constant value
-
-                let docstring_text = match body.first() {
-                    Some(stmt) => match &stmt.node {
-                        StmtKind::Expr { value } => match &value.node {
-                            ExprKind::Constant { value, kind: _ } => match value {
-                                Constant::Str(value) => value.clone(),
-                                _ => "".to_string(),
-                            },
-                            _ => "".to_string(),
-                        },
-                        _ => "".to_string(),
-                    },
-                    None => "".to_string(),
-                };
-
-                let docstring = docstrings::Docstring::new_from_string(&docstring_text);
-
-                functions.push(Function {
-                    name: name.to_string(),
-                    docstring,
-                });
+                functions.push(extract_function(name, body, args));
             }
             _ => {}
         }
@@ -77,6 +193,10 @@ mod tests {
             Args:
                 a: a number
                 b: another number
+                directives:
+                    a Sequence of schema directives, this will be outputted in the schema
+                    when printing it.
+
 
             Returns:
                 the sum of a and b
@@ -91,28 +211,33 @@ mod tests {
 
         assert_eq!(result.functions.len(), 1);
 
-        let function = result.functions[0].clone();
+        let function = &result.functions[0];
 
         assert_eq!(function.name, "foo");
         assert_eq!(function.docstring.title, "Example docstring");
         assert_eq!(function.docstring.description, "");
-        assert_eq!(function.docstring.arguments.len(), 2);
+        assert_eq!(function.docstring.arguments.len(), 3);
 
-        let arguments = function.docstring.arguments.clone();
+        let arguments = &function.docstring.arguments;
 
         assert_eq!(arguments[0].name, "a");
-        assert_eq!(arguments[0].documentation, Some("a number".to_string()));
+        assert_eq!(arguments[0].description, Some("a number".to_string()));
         assert_eq!(arguments[1].name, "b");
+        assert_eq!(arguments[1].description, Some("another number".to_string()));
+        assert_eq!(arguments[2].name, "directives");
         assert_eq!(
-            arguments[1].documentation,
-            Some("another number".to_string())
+            arguments[2].description,
+            Some(
+                "a Sequence of schema directives, this will be outputted in the schema when printing it."
+                    .to_string()
+            )
         );
 
         assert_eq!(function.docstring.returns, "the sum of a and b");
         assert_eq!(function.docstring.raises.len(), 1);
         assert_eq!(function.docstring.raises[0].exception, "ValueError");
         assert_eq!(
-            function.docstring.raises[0].documentation,
+            function.docstring.raises[0].description,
             Some("if a or b are not numbers".to_string())
         );
     }
