@@ -74,7 +74,7 @@ fn parse_arguments(docstring: &str) -> Vec<Argument> {
                 .description
                 .take()
                 .unwrap_or_else(|| "".to_string());
-            current_argument.description = Some((description + "\n" + line).trim().to_owned());
+            current_argument.description = Some((description + " " + line.trim()).trim().to_owned());
         }
     }
 
@@ -302,14 +302,14 @@ mod tests {
         assert_eq!(parsed_docstring.arguments[0].type_, None);
 
         assert_eq!(parsed_docstring.arguments[1].name, "keys");
-        assert_eq!(parsed_docstring.arguments[1].description, Some("A sequence of strings representing the key of each table\n  row to fetch.  String keys will be UTF-8 encoded.".to_string()));
+        assert_eq!(parsed_docstring.arguments[1].description, Some("A sequence of strings representing the key of each table row to fetch.  String keys will be UTF-8 encoded.".to_string()));
         assert_eq!(parsed_docstring.arguments[1].default, None);
         assert_eq!(parsed_docstring.arguments[1].type_, None);
 
         assert_eq!(parsed_docstring.arguments[2].name, "require_all_keys");
         assert_eq!(
             parsed_docstring.arguments[2].description,
-            Some("If True only rows with values set for all keys will be\n  returned.".to_string())
+            Some("If True only rows with values set for all keys will be returned.".to_string())
         );
         assert_eq!(parsed_docstring.arguments[2].default, None);
         assert_eq!(parsed_docstring.arguments[2].type_, None);

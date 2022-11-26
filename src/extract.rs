@@ -193,6 +193,10 @@ mod tests {
             Args:
                 a: a number
                 b: another number
+                directives:
+                    a Sequence of schema directives, this will be outputted in the schema
+                    when printing it.
+
 
             Returns:
                 the sum of a and b
@@ -212,7 +216,7 @@ mod tests {
         assert_eq!(function.name, "foo");
         assert_eq!(function.docstring.title, "Example docstring");
         assert_eq!(function.docstring.description, "");
-        assert_eq!(function.docstring.arguments.len(), 2);
+        assert_eq!(function.docstring.arguments.len(), 3);
 
         let arguments = &function.docstring.arguments;
 
@@ -220,6 +224,14 @@ mod tests {
         assert_eq!(arguments[0].description, Some("a number".to_string()));
         assert_eq!(arguments[1].name, "b");
         assert_eq!(arguments[1].description, Some("another number".to_string()));
+        assert_eq!(arguments[2].name, "directives");
+        assert_eq!(
+            arguments[2].description,
+            Some(
+                "a Sequence of schema directives, this will be outputted in the schema when printing it."
+                    .to_string()
+            )
+        );
 
         assert_eq!(function.docstring.returns, "the sum of a and b");
         assert_eq!(function.docstring.raises.len(), 1);
