@@ -5,6 +5,7 @@ name = "rusty-docs"
 version = "0.1.0"
 
 [lib]
+name = "rusty_docs"
 crate-type = ["cdylib"]
 
 [dependencies]
