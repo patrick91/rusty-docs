@@ -1,17 +1,24 @@
 [package]
 edition = "2021"
+exclude = ["index.node"]
 name = "rusty-docs"
 version = "0.1.0"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["cdylib"]
 
 [dependencies]
+minijinja = "0.23.0"
 rustpython-ast = {features = ["unparse"], git = "https://github.com/charliermarsh/RustPython.git", rev = "778ae2aeb521d0438d2a91bd11238bb5c2bf9d4f"}
 rustpython-common = {git = "https://github.com/charliermarsh/RustPython.git", rev = "778ae2aeb521d0438d2a91bd11238bb5c2bf9d4f"}
 rustpython-parser = {features = ["lalrpop"], git = "https://github.com/charliermarsh/RustPython.git", rev = "778ae2aeb521d0438d2a91bd11238bb5c2bf9d4f"}
-textwrap = "0.15.1"
-minijinja = "0.23.0"
 serde = "1.0.145"
+textwrap = "0.15.1"
+
+[dependencies.neon]
+version = "0.10.1"
+default-features = false
+features = ["napi-6"]
 
 [dev-dependencies]
 insta = {version = "1.21.0", features = ["yaml"]}

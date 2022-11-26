@@ -1,3 +1,5 @@
 /target
 .vscode/
 tmp/
+index.node
+node_modules/
