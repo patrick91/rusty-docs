@@ -1,15 +1,47 @@
 use crate::extract;
-use std::{fs, path::Path};
+use std::{fs, path::{Path, PathBuf, Component}};
 
 use minijinja::{context, Environment};
+
+pub fn normalize_path(path: &Path) -> PathBuf {
+    let mut components = path.components().peekable();
+    let mut ret = if let Some(c @ Component::Prefix(..)) = components.peek().cloned() {
+        components.next();
+        PathBuf::from(c.as_os_str())
+    } else {
+        PathBuf::new()
+    };
+
+    for component in components {
+        match component {
+            Component::Prefix(..) => unreachable!(),
+            Component::RootDir => {
+                ret.push(component.as_os_str());
+            }
+            Component::CurDir => {}
+            Component::ParentDir => {
+                ret.pop();
+            }
+            Component::Normal(c) => {
+                ret.push(c);
+            }
+        }
+    }
+    ret
+}
 
 pub fn generate(code: &str) -> String {
     let module = extract::extract(code);
 
     let path = Path::new("./templates/function.md");
 
-    // print absolute path
-    println!("Absolute path is: {:?}", path.canonicalize());
+    let path = if path.exists() {
+        path
+    } else {
+        Path::new("./node_modules/rusty_docs/templates/function.md")
+    };
+
+    println!("normalised path is: {:?}", normalize_path(path));
 
     let function_template = fs::read_to_string(path).expect("Unable to read function template");
 
