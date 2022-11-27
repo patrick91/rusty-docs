@@ -1,13 +1,17 @@
 use crate::extract;
-use std::fs;
+use std::{fs, path::Path};
 
 use minijinja::{context, Environment};
 
 pub fn generate(code: &str) -> String {
     let module = extract::extract(code);
 
-    let function_template = fs::read_to_string("./templates/function.md")
-        .expect("Unable to read function template");
+    let path = Path::new("./templates/function.md");
+
+    // print absolute path
+    println!("Absolute path is: {:?}", path.canonicalize());
+
+    let function_template = fs::read_to_string(path).expect("Unable to read function template");
 
     let mut env = Environment::new();
     env.add_template("function", &function_template).unwrap();
