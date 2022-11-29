@@ -1,6 +1,6 @@
 {
     "name": "rusty-docs",
-    "version": "0.1.20",
+    "version": "0.1.21",
     "description": "Rusty docs",
     "files": [
         "pkg/rusty_docs_bg.wasm",

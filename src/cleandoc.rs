@@ -1,6 +1,10 @@
 use textwrap;
 
 pub fn cleandoc(docstring: &str) -> String {
+    if docstring.is_empty() {
+        return String::new();
+    }
+
     // split the docstring into lines
     let lines = docstring.lines().collect::<Vec<&str>>();
     // Find minimum indentation of any non-blank lines after first line.
@@ -43,6 +47,13 @@ mod tests {
         "#;
         let result = super::cleandoc(a_docstring);
         assert_eq!(result, "Example docstring");
+    }
+
+    #[test]
+    fn it_works_with_empty_docstring() {
+        let a_docstring = r#""#;
+        let result = super::cleandoc(a_docstring);
+        assert_eq!(result, "");
     }
 
     #[test]
