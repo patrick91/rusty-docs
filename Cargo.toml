@@ -5,8 +5,8 @@ name = "rusty-docs"
 version = "0.1.0"
 
 [lib]
-name = "rusty_docs"
 crate-type = ["cdylib"]
+name = "rusty_docs"
 
 [dependencies]
 minijinja = "0.23.0"
@@ -15,11 +15,13 @@ rustpython-common = {git = "https://github.com/charliermarsh/RustPython.git", re
 rustpython-parser = {features = ["lalrpop"], git = "https://github.com/charliermarsh/RustPython.git", rev = "778ae2aeb521d0438d2a91bd11238bb5c2bf9d4f"}
 serde = "1.0.145"
 textwrap = "0.15.1"
+wasm-bindgen = "0.2"
+getrandom = { version = "0.2", features = ["js"] }
 
-[dependencies.neon]
-version = "0.10.1"
-default-features = false
-features = ["napi-6"]
+# [dependencies.neon]
+# default-features = false
+# features = ["napi-6"]
+# version = "0.10.1"
 
 [dev-dependencies]
 insta = {version = "1.21.0", features = ["yaml"]}

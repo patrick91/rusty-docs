@@ -1,25 +1,21 @@
 {
     "name": "rusty-docs",
-    "version": "0.1.14",
+    "version": "0.1.20",
     "description": "Rusty docs",
-    "main": "index.js",
-    "dependencies": {
-        "@mapbox/node-pre-gyp": "^1.0.7"
-    },
+    "files": [
+        "pkg/rusty_docs_bg.wasm",
+        "pkg/rusty_docs.js",
+        "pkg/rusty_docs_bg.js",
+        "pkg/rusty_docs.d.ts"
+    ],
+    "module": "pkg/rusty_docs.js",
+    "types": "pkg/rusty_docs.d.ts",
     "scripts": {
         "tsc": "tsc",
         "build": "tsc",
         "compile": "cargo-cp-artifact -a cdylib rusty_docs ./bin-package/index.node -- cargo build --release --message-format=json-render-diagnostics",
         "clean": "cargo clean && rm -rf dist && rm -rf bin-package && rm -rf build",
         "test": "true"
-    },
-    "binary": {
-        "module_name": "index",
-        "module_path": "./bin-package",
-        "host": "https://github.com/patrick91/rusty-docs/releases/download/",
-        "package_name": "{module_name}-v{version}-{node_abi}-{platform}-{arch}-{libc}.tar.gz",
-        "remote_path": "{version}",
-        "pkg_path": "."
     },
     "license": "MIT",
     "devDependencies": {
