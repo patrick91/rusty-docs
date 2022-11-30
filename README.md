@@ -27,11 +27,12 @@ TBC
 ## Test
 
 ```bash
-cargo test`
+cargo test
 ```
 
 ### Review snapshots
 
 ```bash
+cargo install cargo-insta
 cargo insta review
 ```
