@@ -8,7 +8,7 @@ in using it, feel free to open an issue or a PR!
 
 ## Roadmap
 
-- [ ] Node.js library
+- [ ] WASM library
 - [ ] Python library
 - [x] Generate markdown files
 - [ ] Extract docs from classes
