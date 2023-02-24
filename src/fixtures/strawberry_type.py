@@ -2,6 +2,7 @@ from typing import Optional, TypeVar, Sequence, Union, Callable
 
 T = TypeVar("T")
 
+
 def type(
     cls: Optional[T],
     *,
