@@ -1,0 +1,41 @@
+---
+source: src/generate.rs
+expression: "super::generate(&code)"
+---
+
+# f
+
+
+
+
+
+
+
+# f
+
+
+
+
+
+
+
+# f
+
+This is a docstring
+
+## Arguments:
+
+
+| Name | Type | Description |
+| --- | --- | --- |
+| x | str | int | This is a parameter |
+
+
+
+
+## Returns:
+
+This is a return value
+
+
+

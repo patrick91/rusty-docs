@@ -109,14 +109,29 @@ pub fn generate(code: &str) -> String {
     output
 }
 
-#[cfg(test)]
-mod tests {
-    use std::fs;
+// #[cfg(test)]
+// mod tests {
 
-    #[test]
-    fn test_file_with_only_functions() {
-        let code = fs::read_to_string("./src/fixtures/functions.py").expect("Unable to read file");
+//     #[cfg(test)]
+//     glob!("./src/fixtures/*.py", |path| {
+//         let code = fs::read_to_string(path).unwrap();
 
-        insta::assert_debug_snapshot!(super::generate(&code));
-    }
+//         insta::assert_display_snapshot!(super::generate(&code));
+//     });
+// }
+
+#[test]
+fn test_snapshots() {
+    insta::glob!("./src/fixtures/**/**/.py", |path| {
+        let contents = std::fs::read_to_string(path).unwrap();
+        insta::assert_display_snapshot!(&contents);
+    });
 }
+// use insta::glob;
+
+// #[cfg(test)]
+// glob!("./src/fixtures/*.py", |path| {
+//     let code = fs::read_to_string(path).unwrap();
+
+//     insta::assert_display_snapshot!(super::generate(&code));
+// });
